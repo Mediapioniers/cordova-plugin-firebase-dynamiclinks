@@ -66,6 +66,13 @@ xmlns:android="http://schemas.android.com/apk/res/android"
             </feature>
         </config-file>
 
+        <config-file target="*-Info.plist" parent="FirebaseDynamicLinksCustomDomains">
+            <array>
+                <string>https://$PAGE_LINK_DOMAIN</string>
+                <string>http://$PAGE_LINK_DOMAIN</string>
+            </array>
+        </config-file>
+
         <config-file target="*-Info.plist" parent="CFBundleURLTypes">
             <array>
                 <dict>
