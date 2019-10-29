@@ -10,6 +10,7 @@
     }
 
     self.domainUriPrefix = [self.commandDelegate.settings objectForKey:[@"DYNAMIC_LINK_URIPREFIX" lowercaseString]];
+    self.appDomain = [self.commandDelegate.settings objectForKey:[@"DYNAMIC_LINK_APP_DOMAIN" lowercaseString]];
 }
 
 - (void)handleOpenURL:(NSNotification*)notification {
@@ -21,6 +22,8 @@
 
         if (dynamicLink) {
             [self postDynamicLink:dynamicLink];
+        } else {
+            [self postNonDynamicLink:url];
         }
     }
 }
@@ -182,6 +185,22 @@
     [data setObject:(absoluteUrl ? absoluteUrl : @"") forKey:@"deepLink"];
     [data setObject:(minimumAppVersion ? minimumAppVersion : @"") forKey:@"minimumAppVersion"];
     [data setObject:(weakConfidence ? @"Weak" : @"Strong") forKey:@"matchType"];
+
+    if (self.dynamicLinkCallbackId) {
+        CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:data];
+        [pluginResult setKeepCallbackAsBool:YES];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:self.dynamicLinkCallbackId];
+    } else {
+        self.lastDynamicLinkData = data;
+    }
+}
+
+- (void)postNonDynamicLink:(NSURL*) nonDynamicLink {
+    NSMutableDictionary *data = [NSMutableDictionary dictionary];
+
+    [data setObject:nonDynamicLink.absoluteString forKey:@"deepLink"];
+    [data setObject:@"1" forKey:@"minimumAppVersion"];
+    [data setObject:@"Weak" forKey:@"matchType"];
 
     if (self.dynamicLinkCallbackId) {
         CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:data];

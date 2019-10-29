@@ -56,6 +56,9 @@
 
     if (handled) {
         return YES;
+    } else if (userActivity.webpageURL && [userActivity.webpageURL.host isEqualToString:dl.appDomain]) {
+         [dl postNonDynamicLink:userActivity.webpageURL];
+         return YES;
     }
 
     return [self identity_application:application

@@ -32,6 +32,7 @@ public class FirebaseDynamicLinksPlugin extends ReflectiveCordovaPlugin {
 
     private FirebaseDynamicLinks firebaseDynamicLinks;
     private String domainUriPrefix;
+    private String appDomain;
     private CallbackContext dynamicLinkCallback;
 
     @Override
@@ -40,6 +41,7 @@ public class FirebaseDynamicLinksPlugin extends ReflectiveCordovaPlugin {
 
         this.firebaseDynamicLinks = FirebaseDynamicLinks.getInstance();
         this.domainUriPrefix = this.preferences.getString("DYNAMIC_LINK_URIPREFIX", "");
+        this.appDomain = this.preferences.getString("DYNAMIC_LINK_APP_DOMAIN", "");
     }
 
     @Override
@@ -77,6 +79,28 @@ public class FirebaseDynamicLinksPlugin extends ReflectiveCordovaPlugin {
     }
 
     private void respondWithDynamicLink(Intent intent) {
+        if (intent.getData() != null) {
+            if (intent.getData().getHost().toLowerCase().equals(this.appDomain) || (intent.getData().getScheme().equals(cordova.getActivity().getPackageName()) &&  !intent.getData().getHost().toLowerCase().contains("page.link") && !intent.getData().getHost().toLowerCase().contains(this.domainUriPrefix))) {
+                JSONObject result = new JSONObject();
+                try {
+                    result.put("deepLink", intent.getData().toString());
+                    result.put("clickTimestamp", "1");
+                    result.put("minimumAppVersion", "0");
+                } catch(JSONException e) {
+                    Log.e(TAG, e.getMessage());
+                    return;
+                }
+
+                if (dynamicLinkCallback != null) {
+                    PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, result);
+                    pluginResult.setKeepCallback(true);
+                    dynamicLinkCallback.sendPluginResult(pluginResult);
+                }
+
+                return;
+            }
+        }
+
         this.firebaseDynamicLinks.getDynamicLink(intent)
                 .continueWith(new Continuation<PendingDynamicLinkData, JSONObject>() {
                     @Override
